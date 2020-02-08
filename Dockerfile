@@ -1,12 +1,9 @@
-FROM wordpress:fpm-alpine
-
-RUN apk add --no-cache s6 nginx mariadb-client
-
+FROM wordpress:php7.3-fpm
+RUN apt update && apt install -y --no-install-recommends nginx-light s6 procps net-tools
 ADD rootfs /
-RUN mkdir /run/nginx && chown -R www-data /etc/services.d/ /var/lib/nginx /var/log/nginx /var/tmp/nginx /run/nginx
-
-EXPOSE 8080
-
-User www-data
+RUN useradd -u 101 php && mkdir /var/run/php && chown php /var/run/php
 
 ENTRYPOINT ["s6-svscan", "/etc/services.d"]
+
+#ENTRYPOINT ["entrypoint.sh"]
+

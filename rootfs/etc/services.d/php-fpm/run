@@ -1,16 +1,22 @@
 #!/bin/sh
 
 # defaults
+cd /var/www/html
 
 if [ ! -e index.php ] && [ ! -e wp-includes/version.php ]; then
   # install wordpress, new installation
   echo >&2 "WordPress not found in $PWD - copying now..."
 
-  tar -cf - -C /usr/src/wordpress . | tar -xf - -C /var/www/html
+  tar -cf - -C /usr/src/wordpress . | tar -xf - || exit 1
+  echo >&2 "Successfully copied wordpress"
 
   # create config
-  cd /var/www/html && wp-cli config create --dbname="${WORDPRESS_DB_NAME:-wordpress}" --dbuser="${WORDPRESS_DB_USER:-root}" --dbpass="${WORDPRESS_DB_PASSWORD}" --dbhost="${WORDPRESS_DB_HOST:-mysql}"
-  cd /var/www/html && wp-cli db create
+  wp config shuffle-salts || exit 1
+  #cd /var/www/html && wp-cli config create --dbname="${WORDPRESS_DB_NAME:-wordpress}" --dbuser="${WORDPRESS_DB_USER:-root}" --dbpass="${WORDPRESS_DB_PASSWORD}" --dbhost="${WORDPRESS_DB_HOST:-mysql}"
+  #cd /var/www/html && wp-cli db create
 fi
 
-exec php-fpm
+chgrp php /proc/self/fd/[12]
+chmod 660 /proc/self/fd/[12]
+
+exec s6-setuidgid php php-fpm
